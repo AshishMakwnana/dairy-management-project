@@ -1,0 +1,31 @@
+# Local secrets
+**/.env
+**/.env.docker
+**/.env.local
+
+# PHP dependencies and runtime
+**/vendor/
+**/storage/logs/*.log
+**/.phpunit.cache/
+
+# JavaScript dependencies and generated output
+**/node_modules/
+**/.expo/
+**/dist/
+**/web-build/
+
+# Generated native projects
+mobile/android/
+mobile/ios/
+
+# Editor and operating system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local test and tool output
+coverage/
+tmp/
+.local-backup/
+.tools/

@@ -1,0 +1,266 @@
+{
+  "project": "DUDHO",
+  "version": "1.0",
+  "note": "Assets organized from uploaded ZIP without image redesign. Review items are not production-approved.",
+  "assets": [
+    {
+      "path": "references/checklist-mascot.png",
+      "source_filename": "Cheerful Dairy Farm Checklist Mascot.png",
+      "purpose": "extra artwork",
+      "status": "reference",
+      "width": 1374,
+      "height": 1145,
+      "has_alpha": true,
+      "sha256": "fee2865b0655cb34e586d0ae33a34c6c7ffdd7a8dea761a29587026fa5528401"
+    },
+    {
+      "path": "references/dashboard-scene.png",
+      "source_filename": "Cheerful Dairy Farm Management Dashboard.png",
+      "purpose": "extra artwork",
+      "status": "reference",
+      "width": 1374,
+      "height": 1145,
+      "has_alpha": true,
+      "sha256": "d89b13ce10105be300388c7c677f047e8e7b8107ed3c20b98f4dc5f397c6ff86"
+    },
+    {
+      "path": "illustrations/milk-collection.png",
+      "source_filename": "Cheerful Dairy Milk Collection Scene.png",
+      "purpose": "collection entry",
+      "status": "ready",
+      "width": 1374,
+      "height": 1145,
+      "has_alpha": true,
+      "sha256": "b07812622883389fe2b260368e6cb0a6323c418f62712666051cac52d4dd432a"
+    },
+    {
+      "path": "app/app-icon-candidate.png",
+      "source_filename": "Cheerful Farmer and Cow Dairy Icon.png",
+      "purpose": "launcher icon candidate; review masking",
+      "status": "review",
+      "width": 1254,
+      "height": 1254,
+      "has_alpha": true,
+      "sha256": "014f43b7950a86fb9ec557157ed99e9ab9e04ef0e031dfc3fa2c99eda08cb775"
+    },
+    {
+      "path": "branding/logo-icon-candidate.png",
+      "source_filename": "Cheerful Farmer and Cow Splash-2.png",
+      "purpose": "compact brand mark candidate",
+      "status": "review",
+      "width": 1254,
+      "height": 1254,
+      "has_alpha": true,
+      "sha256": "ed601620d9943f00ccf79bc57072a6705718973caf57ebe3340e4d858af38887"
+    },
+    {
+      "path": "illustrations/reports.png",
+      "source_filename": "Dairy Analytics Cartoon Dashboard.png",
+      "purpose": "reports empty/introduction",
+      "status": "ready",
+      "width": 1374,
+      "height": 1145,
+      "has_alpha": true,
+      "sha256": "5eabc8a841476eb6397af1588aa7cffb76cea452df8e51e8159934068789fa4f"
+    },
+    {
+      "path": "references/illustration-sticker-sheet.png",
+      "source_filename": "Dairy App Illustration Sticker Sheet.png",
+      "purpose": "combined sheet not production",
+      "status": "reference",
+      "width": 1536,
+      "height": 1024,
+      "has_alpha": true,
+      "sha256": "92b2964604ad076e72ac8fb5f67268d894464538eca988e032a993f08cb78c4e"
+    },
+    {
+      "path": "illustrations/owner-onboarding.png",
+      "source_filename": "Dairy Farm Manager Illustration.png",
+      "purpose": "owner onboarding",
+      "status": "ready",
+      "width": 1379,
+      "height": 1141,
+      "has_alpha": true,
+      "sha256": "1fa36fb2888167a926dd6fc378d9b5522d7b8f6e6e7d33c5c712e09978904d2c"
+    },
+    {
+      "path": "references/rising-profits.png",
+      "source_filename": "Dairy Farmer’s Rising Profits.png",
+      "purpose": "extra artwork",
+      "status": "reference",
+      "width": 1374,
+      "height": 1145,
+      "has_alpha": true,
+      "sha256": "f5623a5f0e8fb84221ad0a065280c76fc70155fb790b3fbca872af11f42a83bf"
+    },
+    {
+      "path": "illustrations/pricing.png",
+      "source_filename": "Dairy Finance Growth Illustration.png",
+      "purpose": "pricing configuration",
+      "status": "review",
+      "width": 1374,
+      "height": 1145,
+      "has_alpha": true,
+      "sha256": "1406eff8e92d0d6d3792c14589a7267baaec8c761f79fe01cb343e2843a838eb"
+    },
+    {
+      "path": "references/farm-sales-ecosystem.png",
+      "source_filename": "Dairy Management Farm-to-Sales Ecosystem.png",
+      "purpose": "out-of-scope illustration",
+      "status": "reference",
+      "width": 1374,
+      "height": 1145,
+      "has_alpha": true,
+      "sha256": "3d483a0ea0c06a0a63447656e2b7b62ce21fc1f48d764c4437d4b5c3c8a35288"
+    },
+    {
+      "path": "illustrations/settlement-payment.png",
+      "source_filename": "Dairy Payment Settlement Success.png",
+      "purpose": "settlement and payment",
+      "status": "ready",
+      "width": 1374,
+      "height": 1145,
+      "has_alpha": true,
+      "sha256": "2bb829fbe49a68c48e5afef8fe2fd9e2eab8f0dd16fd15acd37ec5e76ca5eb10"
+    },
+    {
+      "path": "references/supply-chain.png",
+      "source_filename": "Dairy Supply Chain Smiles.png",
+      "purpose": "out-of-scope illustration",
+      "status": "reference",
+      "width": 1374,
+      "height": 1145,
+      "has_alpha": true,
+      "sha256": "db15434cc227feb8bd4eb477539719eb722a1889bc2f216a481c55ac8363ab2d"
+    },
+    {
+      "path": "references/brand-styleguide.png",
+      "source_filename": "Dudho Dairy App Brand Styleguide (1).png",
+      "purpose": "combined board not production",
+      "status": "reference",
+      "width": 1536,
+      "height": 1024,
+      "has_alpha": true,
+      "sha256": "5bf73f1c4579f3ec5536b1c2645f8762b6d4bccdbddd902e7356e5c7fee3caf8"
+    },
+    {
+      "path": "splash/splash-artwork-reference.png",
+      "source_filename": "Dudho Dairy Farm Splash Screen.png",
+      "purpose": "splash reference, landscape ratio; not a native splash logo",
+      "status": "review",
+      "width": 1870,
+      "height": 841,
+      "has_alpha": true,
+      "sha256": "779e420ed9f63b8819487e67dd80617925af6067f9d71b96ffaaa45046da343d"
+    },
+    {
+      "path": "branding/logo-primary.png",
+      "source_filename": "DUDHO Dairy Farmer and Cow Logo.png",
+      "purpose": "brand logo",
+      "status": "ready",
+      "width": 2179,
+      "height": 722,
+      "has_alpha": true,
+      "sha256": "1cb96b1b4855ef07d6ce246376bd7ccce0bc674b983910ab9c0110e8f2ca9e92"
+    },
+    {
+      "path": "references/logo-collection.png",
+      "source_filename": "Dudho Farm Logo Collection-1.png",
+      "purpose": "combined logo sheet not production",
+      "status": "reference",
+      "width": 1536,
+      "height": 1024,
+      "has_alpha": true,
+      "sha256": "5482c1d3df8893dbcf9125e04feceb5f34131d33cf39bd76c29733807b08154e"
+    },
+    {
+      "path": "references/delivery.png",
+      "source_filename": "Farm-to-Table Dairy Delivery.png",
+      "purpose": "out-of-scope illustration",
+      "status": "reference",
+      "width": 1374,
+      "height": 1145,
+      "has_alpha": true,
+      "sha256": "921677b9cac83e11f9f3eaa48a6ab4a41d84567bd0433bd95621b6ac3bb9ca46"
+    },
+    {
+      "path": "states/offline.png",
+      "source_filename": "Farmer and Cow Offline Dairy App Icon.png",
+      "purpose": "offline connectivity",
+      "status": "ready",
+      "width": 1374,
+      "height": 1145,
+      "has_alpha": true,
+      "sha256": "914eacbe7352d3a2fea26b34f2c89b890443329f4b4d90d9dbf05bc4834fc6be"
+    },
+    {
+      "path": "illustrations/farmer-registration.png",
+      "source_filename": "Farmer Registration and Dairy Profile.png",
+      "purpose": "farmer registration",
+      "status": "ready",
+      "width": 1374,
+      "height": 1145,
+      "has_alpha": true,
+      "sha256": "16c0276e4ef624bd4d996a6525df1051090e43241b923ebd3e7ccbdd0e7b6515"
+    },
+    {
+      "path": "illustrations/welcome.png",
+      "source_filename": "Friendly Dairy Farm Technology Scene.png",
+      "purpose": "welcome screen illustration",
+      "status": "ready",
+      "width": 1374,
+      "height": 1145,
+      "has_alpha": true,
+      "sha256": "be2f78c658d212878599e79737217051a0e329446b8e5b91098acd60509673e5"
+    },
+    {
+      "path": "states/success.png",
+      "source_filename": "Happy Dairy Sync Success.png",
+      "purpose": "success state",
+      "status": "ready",
+      "width": 1536,
+      "height": 1024,
+      "has_alpha": true,
+      "sha256": "62d8faec050cc62f3c10f7258fafced3c2584f3f7be9770bb16397dade4434d6"
+    },
+    {
+      "path": "states/no-farmers.png",
+      "source_filename": "Worried Farmer and Cow Empty State.png",
+      "purpose": "farmer list empty",
+      "status": "ready",
+      "width": 1374,
+      "height": 1145,
+      "has_alpha": true,
+      "sha256": "812ea5a49ff22d2dc2f3c3eecbc6a2d8d29e45fbe163e8de3d840c271c4e8a05"
+    },
+    {
+      "path": "states/sync-failed.png",
+      "source_filename": "Worried Farmer Cloud Sync Error.png",
+      "purpose": "sync failed",
+      "status": "ready",
+      "width": 1374,
+      "height": 1145,
+      "has_alpha": true,
+      "sha256": "3cd881fff5f0a13dc2fb0881336fbf834cf38a6aee3229eeedc70a9838c5c1f3"
+    },
+    {
+      "path": "states/no-data.png",
+      "source_filename": "Worried Farmer’s Empty Dairy Search.png",
+      "purpose": "generic empty search",
+      "status": "ready",
+      "width": 1374,
+      "height": 1145,
+      "has_alpha": true,
+      "sha256": "9829a2b5685b48ce418bb67b38c52369a8142d6964aa5755f39776790358fc86"
+    }
+  ],
+  "missing": [
+    "branding/logo-white.png",
+    "branding/logo-monochrome.png",
+    "app/android-adaptive-foreground.png",
+    "app/notification-icon.png",
+    "app/favicon.png",
+    "splash/splash-logo.png",
+    "states/no-collections.png"
+  ]
+}
