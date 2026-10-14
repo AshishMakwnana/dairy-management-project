@@ -43,3 +43,5 @@ This development computer uses Windows on ARM64, which Google does not currently
 ## Current phase
 
 Phase 0 foundation is in progress. See `docs/phase-0-foundation.md` for the verification record and remaining exit criteria.
+
+Backend feature structure, service-container binding rules, observer guidance, and testing expectations are defined in `docs/backend-architecture.md`.

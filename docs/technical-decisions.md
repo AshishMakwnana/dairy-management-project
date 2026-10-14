@@ -46,3 +46,10 @@ Decision: Version the REST API under `/api/v1` and use a consistent response env
 Status: Accepted  
 Decision: Do not run `npm audit fix --force` against the generated Expo project.  
 Reason: The proposed remediation downgrades Expo and React Native across incompatible major versions. Upstream-compatible updates will be reviewed instead.
+
+## ADR 009 Laravel application architecture
+
+Status: Accepted
+Decision: Use thin versioned API controllers, dedicated Form Requests for meaningful input, policies for authorization, application/domain services for use cases and transactions, API Resources for model-backed responses, and explicit container bindings for meaningful interfaces. Use observers only for behavior that genuinely belongs to an Eloquent lifecycle event.
+Reason: This keeps HTTP, validation, authorization, domain behavior, persistence, and side effects independently testable without creating empty layers mechanically.
+Reference: `docs/backend-architecture.md`.

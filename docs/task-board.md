@@ -14,6 +14,7 @@ Agents should claim one task by changing its status to `IN PROGRESS` and adding 
 | P0-08 | 0 | Define Phase 1 API contract | TODO | Unassigned | P0-05 |
 | P0-09 | 0 | Define Phase 1 authorization matrix | TODO | Unassigned | P0-08 |
 | P0-10 | 0 | Add CI after the first baseline commit and remote are approved | TODO | Unassigned | P0-05 |
+| P0-11 | 0 | Establish Laravel application architecture and service-binding conventions | DONE | Codex | P0-05 |
 | P1-01 | 1 | Install/configure Sanctum and authentication foundation | TODO | Unassigned | P0-08, P0-09 |
 | P1-02 | 1 | Implement Phase 1 migrations and seed data | TODO | Unassigned | P0-08 |
 | P1-03 | 1 | Implement OTP provider abstraction and local driver | TODO | Unassigned | P1-01 |

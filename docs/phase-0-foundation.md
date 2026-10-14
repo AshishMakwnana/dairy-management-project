@@ -89,6 +89,7 @@ The generated Expo dependency tree currently reports npm advisories in transitiv
 - Approve the final DUDHO logo direction and prepare production Android icon/splash exports.
 - Add CI after the first baseline commit and remote repository are approved.
 - Define the complete Phase 1 API contract and authorization matrix.
+- Apply the conventions in `docs/backend-architecture.md` to every Laravel feature.
 
 ## Documentation and agent coordination
 
