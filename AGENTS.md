@@ -13,6 +13,8 @@ Before changing code, read:
 3. `docs/technical-decisions.md`
 4. The relevant phase document under `docs/`
 
+For Phase 1 remediation, also read `docs/phase-1-review-follow-up.md` before claiming any `P1-R*` task.
+
 The current product blueprint is `projects assests/documents/DUDHO_Master_UI_UX_Development_Blueprint_v4.docx`. Version 3 is retained as the pre-implementation source. The blueprint contains historical and revised sections; where they conflict, the technical decision register and current phase documents take precedence until the master blueprint is consolidated.
 
 ## Runtime boundaries
