@@ -132,7 +132,7 @@ Notes:
 - A mock/local delivery driver is selected by server configuration and is never selectable by a production client.
 - `delivery_channel` echoes the requested `sms` or `whatsapp` preference. In local/testing, the configured driver delivers the code to the Mailpit sink instead.
 - The delivery boundary is the `OtpDeliveryProvider` contract; the OTP authentication service owns challenge creation and verification. Future SMS/WhatsApp providers can implement the delivery contract.
-- Local and test environments use `OTP_DELIVERY=local_mail`; codes are sent synchronously to `OTP_LOCAL_MAIL_TO` through the named SMTP mailer and can be inspected in the local Mailpit inbox. The phone number is masked in that email. The driver refuses to resolve in any other environment; a production SMS/WhatsApp provider must be configured before production OTP delivery is enabled.
+- Local and test environments can use `OTP_DELIVERY=local_mail`; codes are sent synchronously to `OTP_LOCAL_MAIL_TO` through the named SMTP mailer and can be inspected in the local Mailpit inbox. The phone number is masked in that email. Set `OTP_DELIVERY=local_mail_with_whatsapp` to keep SMS in Mailpit while sending WhatsApp requests to `WHATSAPP_GATEWAY_URL` plus `WHATSAPP_GATEWAY_ENDPOINT` (default `/api/send-otp`). The gateway request sends only JSON `{ "mobile": "+91..." }` with `X-Internal-Token`, `Content-Type: application/json`, and `Accept: application/json` headers. The gateway returns `{ "otp": "123456" }`; Laravel validates the six-digit value, stores only its hash, and never returns it to the mobile client. Set `OTP_DELIVERY=whatsapp_gateway` only when the client exposes WhatsApp alone. Gateway credentials and returned OTP values must never be logged or exposed through the public API.
 - Codes expire after 5 minutes. Resends are blocked for 60 seconds, then limited to 5 sends per phone per hour and 30 sends per source IP per hour. Verification allows 5 attempts per challenge, 10 attempts per phone per 15 minutes, and 60 attempts per source IP per 15 minutes. Rate-limit responses use `429`, a `Retry-After` header, and `meta.retry_after_seconds`.
 
 ### POST `/api/v1/auth/otp/verify`
@@ -454,7 +454,7 @@ API error responses use `{ success: false, message, errors, meta }`. Authenticat
 
 ## Open questions to resolve before Phase 1 implementation
 
-- Confirm the default OTP delivery provider and support matrix for SMS/WhatsApp.
+- Select and configure a production SMS provider before enabling the SMS option in a production build. WhatsApp delivery is implemented through the internal gateway, subject to live contract validation with a rotated gateway token.
 - Confirm final product language and in-app translation keys for all customer-facing messages.
 - Confirm the owner onboarding step sequence and milestone names before implementing onboarding progress.
 

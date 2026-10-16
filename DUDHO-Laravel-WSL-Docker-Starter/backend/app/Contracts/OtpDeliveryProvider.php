@@ -11,5 +11,5 @@ interface OtpDeliveryProvider
         string $code,
         CarbonInterface $expiresAt,
         string $channel,
-    ): void;
+    ): string;
 }

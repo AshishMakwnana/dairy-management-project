@@ -89,8 +89,8 @@ Phase 1 is an owner-only mobile flow. The listed screen scope is approved by ADR
 | 01 Splash | Dedicated screen deferred | Expo's native launch splash remains; its generated artwork is retained until approved production assets exist. |
 | 02 Language Selection | Included | English/Hindi switcher is available before authentication and persists by platform. It is not a separate route. |
 | 03 Welcome / Introduction | Deferred | Login is the entry experience. |
-| 04 Mobile Login | Included | Owner phone sign-in requests SMS only. |
-| 05 OTP Verification | Included | OTP verification is the second state of the login route. |
+| 04 Mobile Login | Included | Owner phone sign-in offers WhatsApp and SMS delivery choices. WhatsApp calls the configured internal gateway; SMS remains the local/test Mailpit path until a production SMS provider is configured. |
+| 05 OTP Verification | Included | OTP verification is the second state of the login route and resends use the selected delivery channel. |
 | 06 New User – Account Type | Deferred | Phase 1 mobile serves the owner flow only; no farmer/operator branch is exposed. |
 | 07 Dairy Owner Personal Details | Deferred | Identity is established by verified phone; no owner-profile wizard is shown. |
 | 08 Dairy Details | Included, contract-supported subset | Core dairy profile fields are submitted directly to the idempotent dairy-create API. |
@@ -106,7 +106,7 @@ At minimum address:
 
 - Persist pre-authentication English/Hindi selection locally.
 - Add logout backed by the server endpoint, then clear local storage.
-- Decide whether Phase 1 supports SMS only or exposes the documented SMS/WhatsApp selector. Do not show WhatsApp until a configured provider can actually deliver it.
+- The documented SMS/WhatsApp selector is enabled by P1-R07. WhatsApp is backed by the configured internal gateway; do not enable an unconfigured delivery channel in production.
 - Decide whether splash, welcome, account type, owner profile, setup selection, review, and success screens are required now or formally deferred.
 - Do not invent dashboard metrics or checklist completion without server-confirmed data.
 - Extract repeated buttons, inputs, headers, status badges, cards, and loading/error states into reusable components where behavior is shared.

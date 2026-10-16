@@ -2,7 +2,7 @@
 
 ## Current objective
 
-Phase 1 is formally closed. Plan Phase 2 scope and acceptance criteria as a separate task before starting implementation.
+P1-R07 is in progress to add the blueprint's WhatsApp/SMS selector and internal WhatsApp gateway delivery. The request/response contract is documented; complete a live delivery check with a rotated token and visual UI validation before closing this remediation. Plan Phase 2 separately afterward.
 
 ## Current state
 
@@ -29,7 +29,7 @@ Phase 1 is formally closed. Plan Phase 2 scope and acceptance criteria as a sepa
 - The signed-in login state has a translated, accessible sign-out action. It posts to `/api/v1/auth/logout`; success and 401/403 clear local session data, while network, server, and malformed-response failures preserve the session and show translated retry guidance.
 - Mobile dairy onboarding lists active dairies and creates a dairy through the authenticated API. Pending create payloads and `client_uuid` values stay in SecureStore until confirmed; the web preview keeps drafts in memory.
 - Mobile owner dashboard and setup checklist are scoped to a dairy from the active-membership list. Metrics and operational checklist status remain explicitly unavailable until the API returns those values; only dairy registration is shown as confirmed.
-- P1-R05 scope is documented in ADR 012 and the review follow-up: language, login/OTP, core dairy details, dashboard shell, and server-confirmed checklist are included; dedicated splash, welcome, account type, owner profile, setup selection, review, and success screens are deferred. SMS is the only mobile OTP option until a configured provider supports another channel.
+- P1-R05 scope is documented in ADR 012 and the review follow-up: language, login/OTP, core dairy details, dashboard shell, and server-confirmed checklist are included; dedicated splash, welcome, account type, owner profile, setup selection, review, and success screens are deferred. P1-R07 adds the blueprint's WhatsApp/SMS selector and an environment-configured internal WhatsApp gateway adapter; production SMS still requires its own provider.
 - Laravel feature tests and TypeScript compilation pass.
 - Expo web export passes.
 - Root Git repository has an approved initial baseline commit.
@@ -74,13 +74,13 @@ Port 8080 must not be claimed or stopped; it belongs to the unrelated `client-de
 
 ## Immediate next technical work
 
-1. P1-R01 through P1-R06 are complete; Phase 1 is formally closed.
-2. Plan Phase 2 scope and acceptance criteria as a separate task. No Phase 2 implementation has started.
+1. Complete P1-R07 by validating one live gateway delivery with a rotated token and visually checking the selector in a browser or on the authorized Android phone.
+2. After P1-R07 closes, plan Phase 2 scope and acceptance criteria as a separate task. No Phase 2 implementation has started.
 
 ## Known risks and unresolved decisions
 
 - Production vector artwork and platform icon exports for the approved blue D-shaped mark are not yet available.
-- SMS and WhatsApp providers are not selected.
+- WhatsApp is integrated through the documented internal gateway contract but still requires one live delivery check with a rotated token. A production SMS provider is not selected.
 - The Phase 1 database stores legacy baseline users with nullable mobile numbers; newly OTP-authenticated identities must have a normalized unique phone pair.
 - Detailed pricing formulas and rounding rules are not approved.
 - Emulator validation is unavailable on this Windows ARM64 host; the authorized Motorola Edge 50 Fusion was used for physical-device validation over USB.

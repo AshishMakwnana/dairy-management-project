@@ -22,7 +22,12 @@ import {
 } from '../../components/ui';
 import { useLocale } from '../../i18n/LocaleProvider';
 import type { TranslationKey } from '../../i18n/translations';
-import { AuthApiError, sendOtp, verifyOtp } from '../../services/api/auth';
+import {
+  AuthApiError,
+  sendOtp,
+  verifyOtp,
+  type OtpDeliveryChannel,
+} from '../../services/api/auth';
 import { useAuthSession } from '../../services/auth/AuthSessionProvider';
 import {
   normalizeIndianMobileInput,
@@ -74,6 +79,7 @@ export function LoginScreen() {
   } = useAuthSession();
   const [step, setStep] = useState<Step>('phone');
   const [mobile, setMobile] = useState('');
+  const [deliveryChannel, setDeliveryChannel] = useState<OtpDeliveryChannel>('whatsapp');
   const [code, setCode] = useState('');
   const [clientUuid, setClientUuid] = useState(() => Crypto.randomUUID());
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
@@ -125,7 +131,7 @@ export function LoginScreen() {
     setErrorKey(null);
 
     try {
-      const result = await sendOtp(phone, locale);
+      const result = await sendOtp(phone, locale, deliveryChannel);
       setStep('code');
       setCode('');
       setClientUuid(Crypto.randomUUID());
@@ -214,6 +220,37 @@ export function LoginScreen() {
                     value={mobile}
                   />
                   <Text style={styles.helperText}>{t('auth.phoneHint')}</Text>
+                  <Text style={styles.channelHeading}>{t('auth.channelPrompt')}</Text>
+                  <View accessibilityRole="radiogroup" style={styles.channelOptions}>
+                    {(['whatsapp', 'sms'] as const).map((channel) => {
+                      const selected = deliveryChannel === channel;
+
+                      return (
+                        <Pressable
+                          accessibilityLabel={t(`auth.channel.${channel}`)}
+                          accessibilityRole="radio"
+                          accessibilityState={{ checked: selected, disabled: isBusy }}
+                          disabled={isBusy}
+                          key={channel}
+                          onPress={() => setDeliveryChannel(channel)}
+                          style={[
+                            styles.channelCard,
+                            selected && styles.channelCardSelected,
+                          ]}
+                        >
+                          <View style={[styles.radioOuter, selected && styles.radioOuterSelected]}>
+                            {selected ? <View style={styles.radioInner} /> : null}
+                          </View>
+                          <View style={styles.channelCopy}>
+                            <Text style={styles.channelTitle}>{t(`auth.channel.${channel}`)}</Text>
+                            <Text style={styles.channelDescription}>
+                              {t(`auth.channel.${channel}Description`)}
+                            </Text>
+                          </View>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
                 </View>
               ) : (
                 <View style={styles.form}>
@@ -438,6 +475,63 @@ const styles = StyleSheet.create({
     fontSize: typography.supporting,
     lineHeight: 22,
     marginTop: spacing.sm,
+  },
+  channelHeading: {
+    color: colors.neutral[900],
+    fontSize: typography.supporting,
+    fontWeight: '700',
+    marginTop: spacing.xl,
+  },
+  channelOptions: {
+    gap: spacing.md,
+    marginTop: spacing.md,
+  },
+  channelCard: {
+    alignItems: 'center',
+    backgroundColor: colors.neutral.white,
+    borderColor: colors.neutral[300],
+    borderRadius: radii.medium,
+    borderWidth: 1,
+    flexDirection: 'row',
+    minHeight: 68,
+    padding: spacing.lg,
+  },
+  channelCardSelected: {
+    backgroundColor: colors.brand.primaryLight,
+    borderColor: colors.brand.primary,
+    borderWidth: 2,
+  },
+  radioOuter: {
+    alignItems: 'center',
+    borderColor: colors.neutral[600],
+    borderRadius: 10,
+    borderWidth: 2,
+    height: 20,
+    justifyContent: 'center',
+    width: 20,
+  },
+  radioOuterSelected: {
+    borderColor: colors.brand.primary,
+  },
+  radioInner: {
+    backgroundColor: colors.brand.primary,
+    borderRadius: 5,
+    height: 10,
+    width: 10,
+  },
+  channelCopy: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  channelTitle: {
+    color: colors.neutral[900],
+    fontSize: typography.body,
+    fontWeight: '700',
+  },
+  channelDescription: {
+    color: colors.neutral[600],
+    fontSize: typography.supporting,
+    marginTop: spacing.xs,
   },
   bodyText: {
     color: colors.neutral[600],

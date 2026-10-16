@@ -17,9 +17,12 @@ export type AuthSession = {
 };
 
 export type OtpSendResult = {
+  deliveryChannel: OtpDeliveryChannel;
   expiresAt: string;
   retryAfterSeconds: number;
 };
+
+export type OtpDeliveryChannel = 'sms' | 'whatsapp';
 
 export type AuthApiErrorKind =
   | 'network'
@@ -164,15 +167,19 @@ export async function logout(accessToken: string): Promise<void> {
   }
 }
 
-export async function sendOtp(phone: string, locale: Locale): Promise<OtpSendResult> {
-  const data = await post('/auth/otp/send', { phone, channel: 'sms', locale });
+export async function sendOtp(
+  phone: string,
+  locale: Locale,
+  channel: OtpDeliveryChannel = 'sms',
+): Promise<OtpSendResult> {
+  const data = await post('/auth/otp/send', { phone, channel, locale });
   const retryAfterSeconds = isRecord(data)
     ? positiveInteger(data.retry_after_seconds)
     : undefined;
 
   if (
     !isRecord(data)
-    || data.delivery_channel !== 'sms'
+    || data.delivery_channel !== channel
     || typeof data.expires_at !== 'string'
     || retryAfterSeconds === undefined
   ) {
@@ -180,6 +187,7 @@ export async function sendOtp(phone: string, locale: Locale): Promise<OtpSendRes
   }
 
   return {
+    deliveryChannel: channel,
     expiresAt: data.expires_at,
     retryAfterSeconds,
   };

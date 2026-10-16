@@ -17,11 +17,13 @@ class LocalMailOtpDeliveryProvider implements OtpDeliveryProvider
         string $code,
         CarbonInterface $expiresAt,
         string $channel,
-    ): void {
+    ): string {
         $maskedPhone = '***'.Str::substr($phone, -4);
 
         Mail::mailer('smtp')
             ->to($this->recipient)
             ->send(new OtpCodeMail($code, $expiresAt, $maskedPhone, $channel));
+
+        return $code;
     }
 }

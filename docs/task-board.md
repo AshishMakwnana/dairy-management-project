@@ -31,6 +31,7 @@ Agents should claim one task by changing its status to `IN PROGRESS` and adding 
 | P1-R04 | 1 | Implement contracted dairy detail and update endpoints with scoped authorization | DONE | Copilot | P1-07, P1-R02 |
 | P1-R05 | 1 | Reconcile the Phase 1 mobile flow with the approved blueprint and complete authorized scope | DONE | Copilot (GPT-6 Luna) | P1-R03, P1-R04, product scope decision |
 | P1-R06 | 1 | Repeat Phase 1 acceptance, security, migration, contract, and visual checks | DONE | Copilot (GPT-6 Luna) | P1-R01 to P1-R05 |
+| P1-R07 | 1 | Add WhatsApp OTP gateway delivery and restore the SMS/WhatsApp mobile selector | IN PROGRESS | Codex | P1-R06, gateway contract |
 
 ## Safe parallel work
 

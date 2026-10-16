@@ -52,11 +52,13 @@ class OtpAuthenticationService
                 ->lockForUpdate()
                 ->first();
 
-            if (
+            $canReuseChallenge = (
                 $challenge !== null
                 && $challenge->verified_at === null
                 && $challenge->expires_at->isFuture()
-            ) {
+            );
+
+            if ($canReuseChallenge) {
                 $retryAfterSeconds = $challenge->last_sent_at->getTimestamp()
                     + $cooldownSeconds
                     - now()->getTimestamp();
@@ -64,11 +66,20 @@ class OtpAuthenticationService
                 if ($retryAfterSeconds > 0) {
                     throw new OtpRateLimitException($retryAfterSeconds);
                 }
+            }
 
+            $deliveredCode = $this->deliveryProvider->deliver(
+                $phone,
+                $code,
+                $expiresAt,
+                $channel,
+            );
+
+            if ($canReuseChallenge) {
                 $challenge->fill([
                     'channel' => $channel,
                     'locale' => $locale,
-                    'otp_hash' => Hash::make($code),
+                    'otp_hash' => Hash::make($deliveredCode),
                     'expires_at' => $expiresAt,
                     'attempt_count' => 0,
                     'resend_count' => $challenge->resend_count + 1,
@@ -83,7 +94,7 @@ class OtpAuthenticationService
                     'mobile' => $mobile,
                     'channel' => $channel,
                     'locale' => $locale,
-                    'otp_hash' => Hash::make($code),
+                    'otp_hash' => Hash::make($deliveredCode),
                     'expires_at' => $expiresAt,
                     'attempt_count' => 0,
                     'resend_count' => 0,
@@ -92,8 +103,6 @@ class OtpAuthenticationService
                     'user_agent' => $request->userAgent(),
                 ]);
             }
-
-            $this->deliveryProvider->deliver($phone, $code, $expiresAt, $channel);
 
             return [
                 'delivery_channel' => $channel,

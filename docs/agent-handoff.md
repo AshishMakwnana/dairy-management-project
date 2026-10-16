@@ -13,6 +13,15 @@ Add newest handoffs at the top.
 - Next exact action:
 - Assumptions to preserve:
 
+## P1-R07 Codex
+
+- Status: IN PROGRESS. Implementation and automated checks pass; live gateway-contract and visual-device validation remain.
+- Files changed: `DUDHO-Laravel-WSL-Docker-Starter/backend/app/Services/ChannelRoutingOtpDeliveryProvider.php`, `DUDHO-Laravel-WSL-Docker-Starter/backend/app/Services/WhatsappGatewayOtpDeliveryProvider.php`, `DUDHO-Laravel-WSL-Docker-Starter/backend/app/Providers/DomainServiceProvider.php`, `DUDHO-Laravel-WSL-Docker-Starter/backend/config/otp.php`, backend environment examples and OTP tests, `mobile/src/features/auth/LoginScreen.tsx`, `mobile/src/services/api/auth.ts`, translations and integration tests, plus the Phase 1 contract/decision/context/task documentation.
+- Checks run: Pint passed; focused backend OTP tests passed (19 tests, 226 assertions); full backend suite passed (72 tests, 623 assertions); mobile TypeScript and lint passed; mobile unit/integration suite passed (12 Node tests and 19 Jest tests); Expo web export passed; `git diff --check` passed. The gateway endpoint answered `OPTIONS 200` and an empty unauthenticated `POST 401` without sending an OTP.
+- Result: Added an environment-configured WhatsApp gateway provider, hybrid local routing (SMS to Mailpit and WhatsApp to the gateway), and accessible English/Hindi WhatsApp/SMS selection in the login screen. No credential value was written to tracked files or used in an outbound request.
+- Next exact action: Rotate the token disclosed in chat, place the rotated value only in ignored deployment environment configuration, set `OTP_DELIVERY=local_mail_with_whatsapp` for local mixed-channel testing, then send one authorized live WhatsApp OTP and visually inspect the selector in a browser or on the Android phone. The gateway contract is confirmed as JSON request `{ "mobile": "+91..." }`, JSON response `{ "otp": "123456" }`, and the `X-Internal-Token`, `Content-Type: application/json`, and `Accept: application/json` headers. The available browser-control surfaces were unavailable during this task, so visual QA could not be completed.
+- Assumptions to preserve: The external gateway generates and sends the WhatsApp OTP. Laravel must validate and hash the returned code, remain authoritative for expiry, attempt limits and verification, and never return the code through its public API. Do not log the gateway token, returned OTP, or gateway response body. Do not expose SMS in production until a production SMS provider exists.
+
 ## P1-R06 Copilot (final acceptance)
 
 - Status: DONE; Phase 1 is formally closed. No Phase 2 work was started.

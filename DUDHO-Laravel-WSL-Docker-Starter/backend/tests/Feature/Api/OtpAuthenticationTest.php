@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -81,6 +82,38 @@ class OtpAuthenticationTest extends TestCase
             ->assertJsonStructure(['errors' => ['phone']]);
 
         $this->assertDatabaseCount('otp_challenges', 0);
+    }
+
+    public function test_send_endpoint_routes_a_whatsapp_request_to_the_configured_gateway(): void
+    {
+        Http::preventStrayRequests();
+        Http::fake([
+            'https://gateway.example/api/send-otp' => Http::response(['otp' => '827401']),
+        ]);
+        config([
+            'otp.delivery' => 'local_mail_with_whatsapp',
+            'otp.whatsapp_gateway.url' => 'https://gateway.example',
+            'otp.whatsapp_gateway.endpoint' => '/api/send-otp',
+            'otp.whatsapp_gateway.internal_token' => 'test-internal-token',
+            'otp.whatsapp_gateway.timeout_seconds' => 10,
+        ]);
+
+        $this->postJson('/api/v1/auth/otp/send', [
+            'phone' => '+919876543210',
+            'channel' => 'whatsapp',
+            'locale' => 'en',
+        ])->assertOk()
+            ->assertJsonPath('data.delivery_channel', 'whatsapp');
+
+        Http::assertSentCount(1);
+        $this->assertDatabaseHas('otp_challenges', [
+            'mobile' => '9876543210',
+            'channel' => 'whatsapp',
+        ]);
+        $this->assertTrue(Hash::check(
+            '827401',
+            OtpChallenge::query()->where('mobile', '9876543210')->value('otp_hash'),
+        ));
     }
 
     public function test_send_endpoint_returns_429_and_retry_after_during_resend_cooldown(): void

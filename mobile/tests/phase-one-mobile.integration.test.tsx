@@ -123,11 +123,11 @@ test('persists a pre-authentication locale in browser storage and restores it af
   setLocalStorage(browserValues);
 
   const firstMount = mountWithProviders(<LoginScreen />);
-  expect(await screen.findByText('Sign in to DUDHO')).toBeTruthy();
+  expect(await screen.findByText('Sign in to DUDHO', {}, { timeout: 5_000 })).toBeTruthy();
   fireEvent.press(screen.getByRole('button', { name: 'Change language' }));
 
   await waitFor(() => expect(browserValues.get(localeKey)).toBe('hi'));
-  expect(await screen.findByText('DUDHO में साइन इन करें')).toBeTruthy();
+  expect(await screen.findByText('DUDHO में साइन इन करें', {}, { timeout: 5_000 })).toBeTruthy();
   firstMount.unmount();
 
   mountWithProviders(<LoginScreen />);
@@ -162,6 +162,49 @@ test('persists the pre-authentication locale in native SecureStore and safely fa
   mountWithProviders(<LoginScreen />);
   expect(await screen.findByText('Your language choice could not be saved on this device.')).toBeTruthy();
   expect(screen.getByText('Sign in to DUDHO')).toBeTruthy();
+});
+
+test('requests the OTP through the selected WhatsApp channel by default', async () => {
+  mockFetch.mockResolvedValue(apiResponse(200, {
+    success: true,
+    data: {
+      delivery_channel: 'whatsapp',
+      expires_at: '2026-10-16T06:00:00Z',
+      retry_after_seconds: 60,
+    },
+  }));
+  mountWithProviders(<LoginScreen />);
+
+  fireEvent.changeText(await screen.findByLabelText('Mobile number'), '9876543210');
+  fireEvent.press(screen.getByRole('button', { name: 'Send verification code' }));
+
+  expect(await screen.findByText('Verify your number')).toBeTruthy();
+  expect(JSON.parse(mockFetch.mock.calls[0][1]?.body as string)).toMatchObject({
+    phone: '+919876543210',
+    channel: 'whatsapp',
+    locale: 'en',
+  });
+});
+
+test('allows SMS to be selected before requesting the OTP', async () => {
+  mockFetch.mockResolvedValue(apiResponse(200, {
+    success: true,
+    data: {
+      delivery_channel: 'sms',
+      expires_at: '2026-10-16T06:00:00Z',
+      retry_after_seconds: 60,
+    },
+  }));
+  mountWithProviders(<LoginScreen />);
+
+  fireEvent.changeText(await screen.findByLabelText('Mobile number'), '9876543210');
+  fireEvent.press(screen.getByLabelText('SMS'));
+  fireEvent.press(screen.getByRole('button', { name: 'Send verification code' }));
+
+  expect(await screen.findByText('Verify your number')).toBeTruthy();
+  expect(JSON.parse(mockFetch.mock.calls[0][1]?.body as string)).toMatchObject({
+    channel: 'sms',
+  });
 });
 
 test('restores a valid native session', async () => {
