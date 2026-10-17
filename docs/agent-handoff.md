@@ -13,13 +13,31 @@ Add newest handoffs at the top.
 - Next exact action:
 - Assumptions to preserve:
 
+## P2-01 Codex
+
+- Status: IN PROGRESS. The Phase 2 API contract and authorization matrix are documented, but pricing rules remain pending product-owner approval and pricing activation is intentionally blocked.
+- Files changed: `docs/phase-2-api-contract.md`, `docs/phase-2-authorization-matrix.md`, `docs/task-board.md`, `docs/AI_CONTEXT.md`, `docs/technical-decisions.md`, and this handoff.
+- Checks run: `git diff --check` passed after the documentation updates.
+- Result: The contract and authorization matrix cover dairy setup readiness, milk types, collection sessions, quality parameters, farmer management, pricing draft/test/activate/history flows, and optional Google-assisted location with manual fallback. The pricing rule set is recorded as pending approval, not accepted.
+- Next exact action: Obtain product-owner approval for the MVP pricing rule set or reframe the contract to preserve the pending status. Once approved, the implementation task P2-02 must remain non-financial and pricing activation stays blocked until the signoff is recorded.
+- Assumptions to preserve: Laravel remains authoritative for pricing; identity stays separate from dairy membership and farmer relationships; all dairy-scoped mutations are owner-only; active membership resolves resources; cross-dairy access returns 404; and activated pricing versions are immutable.
+
+## P2-00 Codex
+
+- Status: COMPLETE. Phase 2 scope, delivery order, API boundaries, authorization baseline, data-model direction, product-decision gates, and acceptance criteria are documented.
+- Files changed: `docs/phase-2-scope.md`, `docs/task-board.md`, `docs/AI_CONTEXT.md`, and this handoff.
+- Checks run: Reviewed the relevant Phase 2 farmer, pricing, database, and integrity sections in the master blueprint v4; reviewed the existing Phase 1 schema, authorization matrix, and Laravel architecture rules; `git diff --check` passed after documentation updates.
+- Result: Phase 2 is split into configurable dairy setup, farmer management, versioned pricing, optional Google-assisted location, and final acceptance tasks. Pricing activation remains gated on explicit precision, rounding, effective-date, boundary, and method decisions; no universal FAT/SNF formula was invented.
+- Next exact action: Claim P2-01 and approve the pricing product rules, detailed API contract, and authorization matrix. If those decisions are unavailable, claim P2-02 only for non-financial dairy configuration APIs and keep pricing activation blocked.
+- Assumptions to preserve: Laravel remains authoritative for pricing; activated pricing history is immutable; all measurable/financial values use decimals; dairy access is active-membership-scoped; Phase 2 mobile flows are owner-only; Google-assisted location retains manual fallback and does not block core setup.
+
 ## P1-R07 Codex
 
-- Status: IN PROGRESS. Implementation and automated checks pass; live gateway-contract and visual-device validation remain.
-- Files changed: `DUDHO-Laravel-WSL-Docker-Starter/backend/app/Services/ChannelRoutingOtpDeliveryProvider.php`, `DUDHO-Laravel-WSL-Docker-Starter/backend/app/Services/WhatsappGatewayOtpDeliveryProvider.php`, `DUDHO-Laravel-WSL-Docker-Starter/backend/app/Providers/DomainServiceProvider.php`, `DUDHO-Laravel-WSL-Docker-Starter/backend/config/otp.php`, backend environment examples and OTP tests, `mobile/src/features/auth/LoginScreen.tsx`, `mobile/src/services/api/auth.ts`, translations and integration tests, plus the Phase 1 contract/decision/context/task documentation.
-- Checks run: Pint passed; focused backend OTP tests passed (19 tests, 226 assertions); full backend suite passed (72 tests, 623 assertions); mobile TypeScript and lint passed; mobile unit/integration suite passed (12 Node tests and 19 Jest tests); Expo web export passed; `git diff --check` passed. The gateway endpoint answered `OPTIONS 200` and an empty unauthenticated `POST 401` without sending an OTP.
-- Result: Added an environment-configured WhatsApp gateway provider, hybrid local routing (SMS to Mailpit and WhatsApp to the gateway), and accessible English/Hindi WhatsApp/SMS selection in the login screen. No credential value was written to tracked files or used in an outbound request.
-- Next exact action: Rotate the token disclosed in chat, place the rotated value only in ignored deployment environment configuration, set `OTP_DELIVERY=local_mail_with_whatsapp` for local mixed-channel testing, then send one authorized live WhatsApp OTP and visually inspect the selector in a browser or on the Android phone. The gateway contract is confirmed as JSON request `{ "mobile": "+91..." }`, JSON response `{ "otp": "123456" }`, and the `X-Internal-Token`, `Content-Type: application/json`, and `Accept: application/json` headers. The available browser-control surfaces were unavailable during this task, so visual QA could not be completed.
+- Status: COMPLETE. Implementation, automated checks, physical-device visual validation, live WhatsApp delivery, and end-to-end OTP verification pass.
+- Files changed: `DUDHO-Laravel-WSL-Docker-Starter/backend/app/Services/ChannelRoutingOtpDeliveryProvider.php`, `DUDHO-Laravel-WSL-Docker-Starter/backend/app/Services/WhatsappGatewayOtpDeliveryProvider.php`, `DUDHO-Laravel-WSL-Docker-Starter/backend/app/Services/OtpAuthenticationService.php`, `DUDHO-Laravel-WSL-Docker-Starter/backend/app/Providers/DomainServiceProvider.php`, `DUDHO-Laravel-WSL-Docker-Starter/backend/config/otp.php`, backend environment examples and OTP tests, `mobile/src/features/auth/LoginScreen.tsx`, `mobile/src/services/api/auth.ts`, translations and integration tests, plus the Phase 1 contract/decision/context/task documentation.
+- Checks run: Pint passed; focused backend OTP tests passed after the live-flow fix (14 tests, 224 assertions); full backend suite passed (74 tests, 633 assertions); mobile TypeScript and lint passed; mobile unit/integration suite passed (12 Node tests and 19 Jest tests); Expo web export passed; `git diff --check` passed before live validation. On 17 October 2026, the selector was visually confirmed on the Motorola Edge 50 Fusion, the live WhatsApp send endpoint returned HTTP 200, a WhatsApp notification arrived, and OTP verification returned HTTP 200.
+- Result: Added an environment-configured WhatsApp gateway provider, hybrid local routing (SMS to Mailpit and WhatsApp to the gateway), and accessible English/Hindi WhatsApp/SMS selection. Live testing also exposed and fixed an HTTP 500 when the optional `device_name` field was omitted; Laravel now falls back to the `mobile-app` token name and has regression coverage. Gateway credentials remain only in ignored local environment configuration.
+- Next exact action: Plan Phase 2 scope and acceptance criteria as a separate task; no Phase 2 implementation has started.
 - Assumptions to preserve: The external gateway generates and sends the WhatsApp OTP. Laravel must validate and hash the returned code, remain authoritative for expiry, attempt limits and verification, and never return the code through its public API. Do not log the gateway token, returned OTP, or gateway response body. Do not expose SMS in production until a production SMS provider exists.
 
 ## P1-R06 Copilot (final acceptance)

@@ -209,6 +209,24 @@ class OtpAuthenticationTest extends TestCase
         $this->assertStringNotContainsString($plainTextToken, $storedResponse);
     }
 
+    public function test_verify_endpoint_accepts_an_omitted_optional_device_name(): void
+    {
+        Mail::fake();
+        $phone = '+919876543220';
+        $code = $this->sendOtpAndReadCode($phone);
+
+        $this->postJson('/api/v1/auth/otp/verify', [
+            'phone' => $phone,
+            'code' => $code,
+            'client_uuid' => (string) Str::uuid(),
+        ])->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'name' => 'mobile-app',
+        ]);
+    }
+
     public function test_verify_endpoint_replays_the_same_token_for_an_idempotent_request_and_conflicts_on_changed_body(): void
     {
         Mail::fake();

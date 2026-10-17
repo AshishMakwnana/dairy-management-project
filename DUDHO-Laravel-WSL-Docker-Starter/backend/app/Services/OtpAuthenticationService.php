@@ -198,7 +198,7 @@ class OtpAuthenticationService
                 ? now()->addMinutes((int) $expirationMinutes)
                 : null;
             $token = $user->createToken(
-                $data['device_name'] ?: 'mobile-app',
+                ($data['device_name'] ?? null) ?: 'mobile-app',
                 ['*'],
                 $expiresAt,
             );

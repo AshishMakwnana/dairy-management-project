@@ -2,7 +2,7 @@
 
 ## Current objective
 
-P1-R07 is in progress to add the blueprint's WhatsApp/SMS selector and internal WhatsApp gateway delivery. The request/response contract is documented; complete a live delivery check with a rotated token and visual UI validation before closing this remediation. Plan Phase 2 separately afterward.
+Phase 1 and its remediation tasks are complete. P1-R07 passed live WhatsApp delivery, physical-device selector validation, and end-to-end OTP verification on 17 October 2026. Phase 2 scope and delivery tasks are defined; pricing product rules and the detailed API/authorization contract are the next gate.
 
 ## Current state
 
@@ -35,6 +35,7 @@ P1-R07 is in progress to add the blueprint's WhatsApp/SMS selector and internal 
 - Root Git repository has an approved initial baseline commit.
 - Master blueprint v4 includes the Phase 0 implementation record and has passed a 53-page visual inspection.
 - P1-R06 final acceptance passed on 15 October 2026: host and Docker Laravel suites each passed (68 tests, 615 assertions); isolated fresh-migration/rollback and schema checks passed (2 tests/11 assertions and 7 tests/30 assertions); mobile TypeScript, unit/integration tests (12 Node tests and 17 Jest tests), lint, Expo Doctor (21/21), dependency tree, and web/Android exports passed. Route, security, migration, and live health checks passed. English/Hindi web visuals at 390×844 and physical Motorola Edge 50 Fusion validation passed. Production artwork remains a release limitation.
+- P1-R07 final validation passed on 17 October 2026: the WhatsApp/SMS selector was visually confirmed on the Motorola Edge 50 Fusion, a live WhatsApp gateway request delivered an OTP, and verification returned a successful authenticated session. A missing optional `device_name` regression discovered during the live flow was fixed and covered by an automated test; the full Laravel suite passed with 74 tests and 633 assertions.
 - Android Studio and SDK tools exist, but this Windows ARM64 host cannot run Google's supported Android emulator; the authorized Motorola Edge 50 Fusion was validated over USB on 15 October 2026.
 
 ## Important environment facts
@@ -74,13 +75,13 @@ Port 8080 must not be claimed or stopped; it belongs to the unrelated `client-de
 
 ## Immediate next technical work
 
-1. Complete P1-R07 by validating one live gateway delivery with a rotated token and visually checking the selector in a browser or on the authorized Android phone.
-2. After P1-R07 closes, plan Phase 2 scope and acceptance criteria as a separate task. No Phase 2 implementation has started.
+1. Working on P2-01: publish the detailed Phase 2 API contract and authorization matrix and record the product-governance decisions as pending product-owner approval. Pricing precision, rounding, effective-date behavior, and the MVP pricing method set remain under review; no pricing activation is authorized until the decision is recorded.
+2. P2-02 may proceed only for non-financial dairy configuration endpoints while pricing activation remains blocked. No Phase 2 pricing implementation begins before the approved rule set is documented.
 
 ## Known risks and unresolved decisions
 
 - Production vector artwork and platform icon exports for the approved blue D-shaped mark are not yet available.
-- WhatsApp is integrated through the documented internal gateway contract but still requires one live delivery check with a rotated token. A production SMS provider is not selected.
+- A production SMS provider is not selected; SMS remains routed to Mailpit in local mixed-channel testing.
 - The Phase 1 database stores legacy baseline users with nullable mobile numbers; newly OTP-authenticated identities must have a normalized unique phone pair.
 - Detailed pricing formulas and rounding rules are not approved.
 - Emulator validation is unavailable on this Windows ARM64 host; the authorized Motorola Edge 50 Fusion was used for physical-device validation over USB.

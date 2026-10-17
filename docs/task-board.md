@@ -31,7 +31,18 @@ Agents should claim one task by changing its status to `IN PROGRESS` and adding 
 | P1-R04 | 1 | Implement contracted dairy detail and update endpoints with scoped authorization | DONE | Copilot | P1-07, P1-R02 |
 | P1-R05 | 1 | Reconcile the Phase 1 mobile flow with the approved blueprint and complete authorized scope | DONE | Copilot (GPT-6 Luna) | P1-R03, P1-R04, product scope decision |
 | P1-R06 | 1 | Repeat Phase 1 acceptance, security, migration, contract, and visual checks | DONE | Copilot (GPT-6 Luna) | P1-R01 to P1-R05 |
-| P1-R07 | 1 | Add WhatsApp OTP gateway delivery and restore the SMS/WhatsApp mobile selector | IN PROGRESS | Codex | P1-R06, gateway contract |
+| P1-R07 | 1 | Add WhatsApp OTP gateway delivery and restore the SMS/WhatsApp mobile selector | DONE | Codex | P1-R06, gateway contract |
+| P2-00 | 2 | Define Phase 2 scope, product decisions, API boundaries, authorization, and acceptance criteria | DONE | Codex | P1-R07 |
+| P2-01 | 2 | Approve pricing rules and publish the detailed Phase 2 API contract and authorization matrix | IN PROGRESS | Copilot | P2-00, product decisions |
+| P2-02 | 2 | Implement dairy milk-type, collection-session, quality-parameter, and setup-readiness APIs | TODO | Unassigned | P2-01 contract boundary |
+| P2-03 | 2 | Implement mobile Dairy Setup configuration and server-confirmed checklist | TODO | Unassigned | P2-02 |
+| P2-04 | 2 | Implement farmer schema, services, policies, APIs, idempotency, and tests | TODO | Unassigned | P2-01 |
+| P2-05 | 2 | Implement mobile farmer management flows | TODO | Unassigned | P2-04 |
+| P2-06 | 2 | Implement versioned fixed-rate pricing, testing, activation, history, audit, and tests | TODO | Unassigned | P2-01, P2-02 |
+| P2-07 | 2 | Implement mobile pricing overview and guided configuration | TODO | Unassigned | P2-06 |
+| P2-08 | 2 | Implement the approved quality-based or manual rate-chart pricing method | TODO | Unassigned | P2-01, P2-06, product rules |
+| P2-09 | 2 | Add Google-assisted dairy location with confirmed pin and manual fallback | TODO | Unassigned | P2-01 location contract |
+| P2-10 | 2 | Run Phase 2 acceptance, security, migration, pricing-integrity, and device checks | TODO | Unassigned | P2-02 to P2-09 or approved deferrals |
 
 ## Safe parallel work
 
