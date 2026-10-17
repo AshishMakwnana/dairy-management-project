@@ -111,7 +111,7 @@ Register an observer close to its model with Laravel's `ObservedBy` attribute wh
 - Model-backed API responses use API Resources rather than returning Eloquent models directly.
 - Resources expose only approved public fields and preserve the `/api/v1` contract.
 - Non-model system responses, such as the health endpoint, may return a typed `JsonResponse` directly.
-- Success and error envelopes must follow the approved Phase 1 API contract once P0-08 is complete.
+- Success and error envelopes must follow the approved Phase 1 API contract; P0-08 is complete.
 - Never expose exception messages, SQL details, secrets, or unapproved model attributes.
 
 ## Testing expectations

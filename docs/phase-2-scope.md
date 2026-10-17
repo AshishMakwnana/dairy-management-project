@@ -41,7 +41,8 @@ The app must continue to work when Google location services are unavailable. Goo
    - enabled milk types;
    - enabled collection sessions, including name, time window, ordering, and status;
    - enabled quality parameters, usage, required state, ordering, and supported decimal metadata;
-   - setup-readiness response derived from persisted server state.
+   - setup-readiness response derived from persisted server state;
+   - explicit, idempotent owner confirmation that completes onboarding only after the server validates non-financial setup readiness.
 
 2. Farmer management
    - dairy-scoped farmer list, search, and active/inactive filters;
@@ -93,10 +94,10 @@ The blueprint intentionally does not define a universal FAT, SNF, or density for
 4. Whether rate-chart matching is exact, range-based, stepped, or interpolated.
 5. Boundary behavior for values below or above the configured chart.
 6. Whether a future-dated version may overlap another version and how an already scheduled version is replaced or cancelled.
-7. Whether backdated activation is forbidden or requires an explicit privileged correction workflow.
+7. Backdated activation is prohibited in the MVP. A future correction workflow requires a separate approved contract and audit design.
 8. Whether one dairy-wide pricing method can differ by milk type. The current recommendation is independent pricing per enabled milk type.
 
-Until these decisions are recorded, dairy configuration and farmer management may proceed, and pricing can support drafts, but no unapproved quality-based formula may be activated.
+Until these decisions are recorded, dairy configuration and farmer management may proceed, and pricing can support drafts and test calculation previews, but the recommended fixed-rate MVP is pending approval and pricing activation remains blocked.
 
 ## Proposed data model
 
@@ -113,11 +114,10 @@ Configuration updates must be transactional. A change that would leave no enable
 
 ### Farmer tables
 
-- `farmers`: farmer business profile with UUID, name, normalized contact mobile, and optional linked `user_id` when the same identity later authenticates.
-- `dairy_farmers`: dairy relationship with UUID, dairy-specific farmer code, status, village or area, joined date, creator, and client creation UUID/hash.
-- `dairy_farmer_milk_types`: enabled milk types supplied by that farmer within that dairy relationship.
+- `dairy_farmers`: the Phase 2 farmer resource and privacy boundary, with UUID, dairy, dairy-specific display name, normalized contact mobile, dairy-specific farmer code, status, village or area, joined date, optional linked `user_id`, creator, and client creation UUID/hash.
+- `dairy_farmer_milk_types`: enabled milk types supplied by that dairy-local farmer record.
 
-The same authenticated user may later have farmer relationships with more than one dairy. Dairy owners only see farmer relationships belonging to dairies where they have active access.
+Phase 2 does not create or reuse a global farmer business-profile row keyed by mobile. The same person may have separate dairy-local records, names, and contact details in multiple dairies. A later authenticated-user link is optional and never grants membership or exposes another dairy's record. All list, search, uniqueness, and nested-binding operations are constrained by `dairy_id` before matching mobile or name.
 
 ### Pricing tables
 
@@ -135,55 +135,60 @@ All routes use `/api/v1`, `auth:sanctum`, active-membership-scoped dairy binding
 
 ### Dairy configuration
 
-- `GET /dairies/{dairy}/setup`
-- `PATCH /dairies/{dairy}/settings`
-- `GET /dairies/{dairy}/milk-types`
-- `PUT /dairies/{dairy}/milk-types`
-- `GET /dairies/{dairy}/collection-sessions`
-- `PUT /dairies/{dairy}/collection-sessions`
-- `GET /dairies/{dairy}/quality-parameters`
-- `PUT /dairies/{dairy}/quality-parameters`
+- `GET /api/v1/dairies/{dairy}/setup-readiness`
+- `POST /api/v1/dairies/{dairy}/setup/complete`
+- `GET /api/v1/dairies/{dairy}/milk-types`
+- `POST /api/v1/dairies/{dairy}/milk-types`
+- `PATCH /api/v1/dairies/{dairy}/milk-types/{milkType}`
+- `GET /api/v1/dairies/{dairy}/collection-sessions`
+- `POST /api/v1/dairies/{dairy}/collection-sessions`
+- `PATCH /api/v1/dairies/{dairy}/collection-sessions/{session}`
+- `GET /api/v1/dairies/{dairy}/quality-parameters`
+- `POST /api/v1/dairies/{dairy}/quality-parameters`
+- `PATCH /api/v1/dairies/{dairy}/quality-parameters/{qualityParameter}`
 
 ### Farmers
 
-- `GET /dairies/{dairy}/farmers`
-- `POST /dairies/{dairy}/farmers`
-- `GET /dairies/{dairy}/farmers/{farmer}`
-- `PATCH /dairies/{dairy}/farmers/{farmer}`
+- `GET /api/v1/dairies/{dairy}/farmers`
+- `POST /api/v1/dairies/{dairy}/farmers`
+- `GET /api/v1/dairies/{dairy}/farmers/{farmer}`
+- `PATCH /api/v1/dairies/{dairy}/farmers/{farmer}`
+- `PATCH /api/v1/dairies/{dairy}/farmers/{farmer}/milk-types`
 
 Farmer creation uses `client_uuid`. List responses are paginated and searchable by name, normalized mobile, or farmer code. Nested farmer binding must never resolve a relationship from another dairy.
 
 ### Pricing
 
-- `GET /dairies/{dairy}/pricing`
-- `POST /dairies/{dairy}/pricing/drafts`
-- `GET /dairies/{dairy}/pricing/{pricingConfiguration}`
-- `PATCH /dairies/{dairy}/pricing/{pricingConfiguration}` for drafts only
-- `POST /dairies/{dairy}/pricing/{pricingConfiguration}/test`
-- `POST /dairies/{dairy}/pricing/{pricingConfiguration}/activate`
-- `GET /dairies/{dairy}/pricing/history`
+- `GET /api/v1/dairies/{dairy}/pricing/versions` (list all pricing versions for the dairy, supporting status and milk-type filters)
+- `POST /api/v1/dairies/{dairy}/pricing/versions` (create a new draft version for a milk type)
+- `GET /api/v1/dairies/{dairy}/pricing/versions/{pricingVersion}` (get full details of one pricing version)
+- `PATCH /api/v1/dairies/{dairy}/pricing/versions/{pricingVersion}` (edit a draft version only; active, scheduled, expired, and historical versions are immutable; requires `client_uuid`)
+- `POST /api/v1/dairies/{dairy}/pricing/versions/{pricingVersion}/test` (test a draft calculation preview without creating collection or financial records)
+- `POST /api/v1/dairies/{dairy}/pricing/versions/{pricingVersion}/activate` (explicitly activate a version; owner-only, retry-safe, blocked pending product approval)
+- `GET /api/v1/dairies/{dairy}/pricing/versions/{pricingVersion}/history` (view audit events and lifecycle history of one specific version)
+- `GET /api/v1/dairies/{dairy}/pricing/milk-types/{milkType}` (get current active pricing configuration and latest version status for one milk type)
 
-Activation is explicit, idempotent, locked against concurrent activation, and rejects incomplete rules, invalid effective dates, disabled milk types, or missing required parameters.
+Activation is explicit, idempotent, locked against concurrent activation, and rejects incomplete rules, backdated or invalid effective dates, disabled milk types, or missing required parameters. It is additionally fail-closed behind `pricing.activation_enabled`, sourced from `PRICING_ACTIVATION_ENABLED=false`, until ADR 013 is accepted.
 
 ### Assisted dairy location
 
-- `GET /location/suggestions` through an authenticated, rate-limited Laravel proxy when Places search is selected;
-- `POST /location/reverse-geocode` for user-approved coordinates; and
-- the existing dairy update endpoint accepts confirmed structured fields plus decimal latitude and longitude after its contract is updated.
+- `GET /api/v1/dairies/{dairy}/location/suggestions` through an authenticated, rate-limited Laravel proxy when Google Places search is selected (read-only, does not require `client_uuid`);
+- `POST /api/v1/dairies/{dairy}/location/reverse-geocode` for user-approved coordinates through an authenticated, rate-limited Laravel proxy; and
+- the existing dairy update endpoint `PATCH /api/v1/dairies/{dairy}` is reused for saving the user-confirmed structured location (`village_or_area`, `city`, `district`, `state`, `country`, `postal_code`), `latitude`, `longitude`, `source` (`"google"` | `"manual"`), and `place_id`, while preserving backward compatibility for Phase 1 legacy partial updates. Enhanced location confirmation is validated conditionally when `location.source` is submitted (implemented in `P2-09`).
 
-Google credentials remain server-side, restricted, uncommitted, and protected by quotas. The client must not relay arbitrary provider requests through the proxy.
+Google credentials remain server-side, restricted, uncommitted, and protected by quotas. The client must not relay arbitrary provider requests through the proxy. Manual fallback for village/city, district, state, and PIN must remain fully functional when Google services are unavailable or bypassed.
 
 ## Authorization matrix
 
 | Principal | Read dairy configuration | Change dairy configuration | Read farmers | Manage farmers | Read pricing | Draft test or activate pricing |
 |---|---:|---:|---:|---:|---:|---:|
-| Anonymous | Deny 401 | Deny 401 | Deny 401 | Deny 401 | Deny 401 | Deny 401 |
-| Authenticated without active target-dairy membership | Hide as 404 | Hide as 404 | Hide as 404 | Hide as 404 | Hide as 404 | Hide as 404 |
-| Active non-owner member | Allow when a later role contract authorizes it; otherwise deny 403 | Deny 403 | Allow only after a later role contract | Deny 403 | Allow only after a later role contract | Deny 403 |
-| Active owner | Allow | Allow | Allow | Allow | Allow | Allow |
-| Inactive user, dairy, or membership | Deny | Deny | Deny | Deny | Deny | Deny |
+| Anonymous | Deny `401` | Deny `401` | Deny `401` | Deny `401` | Deny `401` | Deny `401` |
+| Authenticated without active target-dairy membership, inactive membership, nested cross-dairy resource, or membership mismatch | Hide as `404` | Hide as `404` | Hide as `404` | Hide as `404` | Hide as `404` | Hide as `404` |
+| Active in-scope member without required permission | Deny `403` | Deny `403` | Deny `403` | Deny `403` | Deny `403` | Deny `403` |
+| Active owner | Allow | Allow | Allow | Allow | Allow | Allow (activation blocked pending approval) |
+| Inactive user, dairy, or membership | Deny `404` | Deny `404` | Deny `404` | Deny `404` | Deny `404` | Deny `404` |
 
-Phase 2 exposes owner flows only, so no new staff/operator capability is implied by the table.
+Phase 2 exposes owner flows only; all Phase 2 endpoints (both read and mutation) remain strictly owner-only. Active non-owner members receive Deny `403` across all Phase 2 endpoints until staff/operator roles are introduced in a later phase.
 
 ## Validation and history rules
 
@@ -192,6 +197,7 @@ Phase 2 exposes owner flows only, so no new staff/operator capability is implied
 - Session codes are unique within a dairy; start/end-time behavior is explicitly validated.
 - Quality values and rate-rule values are decimal strings within approved ranges and scales.
 - Farmer phone numbers are normalized; duplicate handling does not disclose another dairy's records.
+- Farmer display names and contact mobiles are stored per dairy relationship; mobile matching never performs a cross-dairy lookup or merge.
 - Farmer codes are server-generated and unique within the dairy.
 - Pricing method and rule payloads use a server-owned schema; arbitrary formulas or code are rejected.
 - Only drafts are mutable.
@@ -202,7 +208,7 @@ Phase 2 exposes owner flows only, so no new staff/operator capability is implied
 
 1. `P2-00` Define Phase 2 scope, decisions, boundaries, and acceptance criteria.
 2. `P2-01` Approve pricing precision, rounding, effective-date, and MVP method rules; publish the Phase 2 API contract and detailed authorization matrix.
-3. `P2-02` Implement dairy milk-type, collection-session, quality-parameter, and setup-readiness APIs.
+3. `P2-02` Implement dairy milk-type, collection-session, quality-parameter, setup-readiness, and idempotent setup-completion APIs.
 4. `P2-03` Implement the mobile Dairy Setup configuration screens and server-confirmed checklist.
 5. `P2-04` Implement farmer schema, services, policies, APIs, idempotency, and tests.
 6. `P2-05` Implement mobile farmer list, registration, success, and profile flows.
@@ -223,6 +229,8 @@ Only one task is active at a time unless ownership and touched files are explici
 - Milk, session, and quality configuration is data-driven and returned in stable order.
 - Invalid updates roll back atomically and cannot leave the dairy unusable.
 - Mobile checklist status comes from persisted server state.
+- Phase 1 seeded milk types, quality parameters, and collection sessions count when valid and enabled; the readiness example must not report them missing for a normally created dairy.
+- `onboarding_completed_at` changes only through the idempotent owner confirmation endpoint after server validation; a readiness read never mutates it.
 
 ### Farmers
 
@@ -238,6 +246,8 @@ Only one task is active at a time unless ownership and touched files are explici
 - Server rejects unsupported methods and incomplete or invalid rule payloads.
 - A test returns decimal-string rate and milk value without creating a collection.
 - Activation is explicit, idempotent, authorized, audited, and concurrency-safe.
+- Activation is rejected with `pricing_activation_disabled` while the default-off backend gate is disabled; automated tests cover both disabled and explicitly enabled configurations.
+- Backdated effective dates are rejected for the MVP.
 - Updating active pricing creates a new version and never changes the prior version.
 - Effective-date resolution selects at most one applicable version.
 - Automated tests cover decimal precision, rounding, boundaries, version selection, dairy isolation, and immutability.

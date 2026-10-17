@@ -78,6 +78,25 @@ Consequence: Do not infer dashboard metrics, setup completion, or operational su
 ## ADR 013 Phase 2 pricing governance and MVP pricing method (pending approval)
 
 Status: Pending product-owner approval
-Decision: Use the recommended MVP pricing method as the only allowed pricing activation path until explicit product-owner signoff is recorded. The recommended method is fixed rate per enabled milk type, independent by Cow and Buffalo, with `Amount = quantity × active rate` and no overlapping effective dates. Quantity remains stored with 3 decimal places, rate values are stored internally with 4 decimal places, and the final line amount is rounded to 2 decimals using half-up rounding only at the final amount. Effective pricing starts at the beginning of the selected date in the dairy's timezone, and activation does not permit silent backdating or overlapping version windows. The same dairy may maintain independent pricing methods per milk type only after that method is explicitly approved; no universal FAT/SNF formula is accepted without a product-approved specification.
+Decision: Use the recommended MVP pricing method as the only allowed pricing activation path until explicit product-owner approval is recorded. The recommended fixed-rate MVP is pending approval and requires explicit agreement on all of the following rules:
+
+1. fixed rate per enabled milk type;
+2. Cow and Buffalo configured independently;
+3. quantity stored to 3 decimal places;
+4. rate stored to 4 decimal places;
+5. final amount rounded to 2 decimal places;
+6. half-up rounding only on the final amount (`Amount = quantity × active rate`);
+7. effective from the start of the selected date in the dairy timezone;
+8. backdated effective dates are prohibited for the MVP; there is no privileged override in this phase;
+9. no overlapping effective versions;
+10. activated versions are immutable.
+
 Reason: The blueprint and Phase 2 scope explicitly require that pricing precision, effective-date behavior, rounding, method set, and activation rules be approved before any pricing version is activated. The contract must reject unapproved pricing formulas and preserve immutability for activated versions.
-Consequence: Draft and test endpoints remain available for review, but pricing activation is blocked until the product owner approves the rule set. Activated pricing history remains immutable. Any future quality-based or manual rate-chart method must define exact matching, boundary, rounding, and audit behavior before it can be enabled. The current API contract and authorization matrix reflect this pending state rather than treating the rules as accepted.
+Consequence: Draft and test endpoints remain available for review, but pricing activation is blocked until the product owner approves the complete rule set. The backend gate `pricing.activation_enabled`, sourced from `PRICING_ACTIVATION_ENABLED`, defaults to `false` and must be tested fail-closed; accepting this ADR does not itself change deployment configuration. Activated pricing history remains immutable. Any future quality-based or manual rate-chart method must define exact matching, boundary, rounding, and audit behavior before it can be enabled. The current API contract and authorization matrix reflect this pending state rather than treating the rules as accepted.
+
+## ADR 014 Dairy-local farmer profiles
+
+Status: Accepted
+Decision: In Phase 2, the farmer API resource is a dairy-local `dairy_farmers` record containing the dairy-specific display name and normalized contact mobile. Do not create or reuse a global farmer business-profile record keyed by mobile. An optional future `user_id` link connects authentication identity without moving dairy-local profile data or granting membership.
+Reason: Different dairies may know the same person by different names or contact details. Global mobile matching could leak another dairy's record or create cross-dairy update conflicts.
+Consequence: Farmer uniqueness, search, route binding, updates, and API output are always scoped by `dairy_id`. The same person may have independent records in multiple dairies, and cross-dairy matching never returns or mutates another dairy's profile.

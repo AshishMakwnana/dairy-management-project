@@ -6,7 +6,7 @@ Phase 0 establishes a working Laravel API and React Native mobile foundation bef
 
 ## Status
 
-Status: In progress  
+Status: Complete
 Started: 9 October 2026
 
 ## Confirmed architecture
@@ -57,7 +57,7 @@ The initial health response establishes the Phase 0 envelope:
 }
 ```
 
-The detailed success, validation, authorization, conflict, and server-error contracts will be completed before Phase 1 endpoints are implemented.
+The detailed success, validation, authorization, conflict, and server-error contracts were completed in the Phase 1 API contract before Phase 1 acceptance.
 
 ## Verification record
 

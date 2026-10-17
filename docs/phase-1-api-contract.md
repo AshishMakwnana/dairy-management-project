@@ -452,10 +452,11 @@ API error responses use `{ success: false, message, errors, meta }`. Authenticat
 - Prefer `Transaction` + `lockForUpdate()` or a comparable pattern for writes that depend on single-source-of-truth dairy state.
 - Do not expose OTPs, token hashes, exception details, or unapproved identity fields in API responses or logs.
 
-## Open questions to resolve before Phase 1 implementation
+## Post-Phase 1 follow-ups
 
-- Select and configure a production SMS provider before enabling the SMS option in a production build. WhatsApp delivery is implemented through the internal gateway, subject to live contract validation with a rotated gateway token.
-- Confirm final product language and in-app translation keys for all customer-facing messages.
-- Confirm the owner onboarding step sequence and milestone names before implementing onboarding progress.
+- Select and configure a production SMS provider before enabling the SMS option in a production build. WhatsApp delivery through the internal gateway passed live validation on 17 October 2026.
+- English and Hindi are the approved initial languages; continue using translation keys for customer-facing messages.
+- Phase 2 defines server-confirmed setup readiness and an explicit owner completion action. Expanded historical onboarding screens remain deferred unless a later approved contract restores them.
+- Configure finite bearer-token expiry and device/session management before financial workflows; this is tracked as `P1-R08`.
 
 This contract is intentionally designed to support the first mobile owner flow while leaving room for later staff/operator permissions and future web-admin reuse.

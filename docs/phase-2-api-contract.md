@@ -26,15 +26,12 @@ The pricing section deliberately remains in a blocked state until the product ow
 ```json
 {
   "success": true,
-  "message": "Dairy setup readiness updated.",
+  "message": "Dairy setup readiness retrieved.",
   "data": {
-    "id": "dairy-uuid",
-    "is_ready": false,
-    "missing_steps": [
-      "milk_types",
-      "collection_sessions",
-      "quality_parameters"
-    ]
+    "dairy_id": "dairy-uuid",
+    "is_ready": true,
+    "missing_steps": [],
+    "pricing_ready": false
   },
   "meta": {
     "request_id": "req_01J9A7M4Y3FK9Q2QZ5F3A9ZQ4P",
@@ -90,10 +87,17 @@ Response fields:
   "message": "Dairy setup readiness retrieved.",
   "data": {
     "dairy_id": "dairy-uuid",
-    "is_ready": false,
-    "status": "incomplete",
-    "completed_steps": ["profile"],
-    "missing_steps": ["milk_types", "collection_sessions", "quality_parameters"],
+    "is_ready": true,
+    "status": "ready",
+    "completed_steps": ["profile", "milk_types", "collection_sessions", "quality_parameters"],
+    "missing_steps": [],
+    "pricing_ready": false,
+    "pricing_missing_milk_type_ids": ["milk-type-uuid"],
+    "onboarding": {
+      "state": "draft",
+      "can_complete": true,
+      "completed_at": null
+    },
     "updated_at": "2026-10-14T12:04:00Z"
   },
   "meta": {}
@@ -105,7 +109,32 @@ Rules:
 - `dairy` must resolve via the authenticated owner's active membership
 - cross-dairy access resolves to `404`
 - readiness is derived from persisted server state, not client heuristics
+- the milk types, quality parameters, and Morning/Evening sessions created atomically during Phase 1 dairy creation count as completed when they remain valid and enabled
+- `is_ready` covers the non-financial profile, milk-type, collection-session, and quality-parameter configuration only
+- `pricing_ready` is reported separately per enabled milk type and does not prevent the owner from completing basic onboarding
+- this read endpoint never mutates `onboarding_completed_at`
 - no configuration step is considered complete until the server validates its persisted state
+
+### POST `/api/v1/dairies/{dairy}/setup/complete`
+
+Explicitly completes basic dairy onboarding after the owner reviews the server-confirmed configuration.
+
+Request body:
+
+```json
+{
+  "client_uuid": "9d050031-acde-4217-8c41-27a0bb1dbd56"
+}
+```
+
+Rules:
+
+- owner-only and active-membership scoped
+- requires `is_ready: true`; otherwise returns `409` with the current `missing_steps`
+- sets `onboarding_completed_at` once inside the domain-service transaction
+- retrying the same request is idempotent and returns the completed state
+- a different payload using the same `client_uuid` returns `409`
+- pricing readiness is independent and does not block basic onboarding completion
 
 ## Dairy milk-type configuration
 
@@ -330,7 +359,7 @@ Example response:
 
 ### POST `/api/v1/dairies/{dairy}/farmers`
 
-Creates a farmer relationship for the dairy.
+Creates a dairy-local farmer record. The Phase 2 farmer resource represents the relationship inside this dairy, not a globally shared person profile.
 
 Request body:
 
@@ -352,6 +381,9 @@ Validation rules:
 - `milk_types` optional list of enabled dairy milk-type UUIDs
 - server generates the dairy-specific farmer code
 - duplicate farmer/mobile combinations within the same dairy are rejected by the domain service
+- `name` and normalized `mobile` belong to the dairy-local farmer record; another dairy may keep its own record for the same person
+- the service must not search, merge, return, or update another dairy's farmer record by mobile number
+- a later optional link to an authenticated `user_id` does not move the display name or contact fields into the global user identity and does not grant dairy access
 
 ### GET `/api/v1/dairies/{dairy}/farmers/{farmer}`
 
@@ -373,15 +405,34 @@ Updates the set of milk types enabled for that farmer within the dairy.
 
 ## Pricing configuration, testing, activation, details, and history
 
-Important: the pricing method rules below are intentionally pending approval. The API contract reflects the gated state: pricing drafts and server-side test runs may exist, but pricing activation remains blocked until the product owner approves the rule set.
+Important: the pricing method rules below are intentionally pending approval. The recommended fixed-rate MVP is pending approval. The API contract reflects the gated state: pricing drafts and server-side test runs may exist, but pricing activation remains blocked until the product owner approves the rule set.
+
+Six distinct operations are defined around `/api/v1/dairies/{dairy}/pricing/versions`:
+1. **Listing all pricing versions**: `GET /api/v1/dairies/{dairy}/pricing/versions` (returns all versions for the dairy, supporting status and milk-type filters)
+2. **Creating a draft version**: `POST /api/v1/dairies/{dairy}/pricing/versions` (creates a new version in `draft` status)
+3. **Getting one version**: `GET /api/v1/dairies/{dairy}/pricing/versions/{pricingVersion}` (retrieves full configuration, precision snapshot, and payload hash)
+4. **Editing a draft**: `PATCH /api/v1/dairies/{dairy}/pricing/versions/{pricingVersion}` (mutates draft configuration only; active, scheduled, expired, and historical versions are immutable; requires `client_uuid`)
+5. **Testing a draft**: `POST /api/v1/dairies/{dairy}/pricing/versions/{pricingVersion}/test` (runs server-side calculation preview without creating collection or financial records)
+6. **Activating a version**: `POST /api/v1/dairies/{dairy}/pricing/versions/{pricingVersion}/activate` (explicit, owner-only, retry-safe activation; blocked pending product approval)
+
+In addition:
+- **Viewing audit/event history of one version**: `GET /api/v1/dairies/{dairy}/pricing/versions/{pricingVersion}/history` (returns lifecycle events and audit log for that specific version)
+- **Current active pricing for a milk type**: `GET /api/v1/dairies/{dairy}/pricing/milk-types/{milkType}` (returns currently active version and readiness status)
 
 ### GET `/api/v1/dairies/{dairy}/pricing/versions`
 
-Returns all pricing versions for the dairy, including draft, test, active, and historical records.
+Returns all pricing versions for the dairy, supporting pagination and filtering.
+
+Query parameters:
+
+- `milk_type` optional UUID: filter by specific dairy milk type
+- `status` optional enum: `draft`, `active`, `scheduled`, `expired`, `archived`, `all` (default `all`)
+- `page` optional integer (default 1)
+- `per_page` optional integer (default 20)
 
 ### POST `/api/v1/dairies/{dairy}/pricing/versions`
 
-Creates a new draft version for a given milk type.
+Creates a new draft pricing version for a given milk type.
 
 Request body:
 
@@ -400,16 +451,47 @@ Request body:
 Validation rules:
 
 - `milk_type_id` required and belongs to the dairy
-- `method` required and approved by the current policy set
+- `method` required and supported by the policy set (`fixed_rate`)
 - `effective_date` required date; first moment of the selected date in the dairy timezone
 - `rate` required decimal string with 4 decimal places for internal storage
 - no overlapping active or scheduled pricing versions for the same milk type
-- no silent backdating; if the effective date is in the past, the service requires explicit policy-controlled override
-- `method` not equal to an unapproved quality-based formula until the product owner approves it
+- backdated effective dates are prohibited for the MVP; `effective_date` must be today or later in the dairy timezone
+- `method` cannot use unapproved quality-based formulas until product-owner approval is recorded
+- `client_uuid` required for retry-safe idempotency
+
+### GET `/api/v1/dairies/{dairy}/pricing/versions/{pricingVersion}`
+
+Returns the full version details, including method, precision snapshot, effective date window, immutable payload hash, and status.
+
+### PATCH `/api/v1/dairies/{dairy}/pricing/versions/{pricingVersion}`
+
+Updates an existing draft pricing version. This endpoint modifies drafts only; active, scheduled, expired, or historical versions are immutable.
+
+Request body:
+
+```json
+{
+  "rate": "44.0000",
+  "effective_date": "2026-11-01",
+  "description": "Updated winter fixed rate for Cow",
+  "client_uuid": "e2d83ab1-5231-4cfa-85fe-4df3311f92e4"
+}
+```
+
+Validation rules:
+
+- version must belong to the active dairy membership scope; cross-dairy lookup returns `404`
+- target version `status` must be `draft`; if the version is `active`, `scheduled`, `expired`, or `archived`, the request is rejected with `409 Conflict` (immutable version)
+- `rate` optional decimal string with 4 decimal places
+- `effective_date` optional date string; first moment of selected date in dairy timezone; cannot overlap another active or scheduled window
+- when supplied, `effective_date` must be today or later in the dairy timezone; the MVP has no privileged backdating override
+- `description` optional string
+- `client_uuid` required for retry-safe idempotency
+- records an audit event for the draft update
 
 ### POST `/api/v1/dairies/{dairy}/pricing/versions/{pricingVersion}/test`
 
-Runs a server-side test calculation using the draft configuration, without persisting any collection or settlement record.
+Runs a server-side test calculation using the version configuration, without persisting any collection or settlement record.
 
 Request body:
 
@@ -435,8 +517,8 @@ Example response:
     "method": "fixed_rate",
     "quantity": "24.750",
     "rate": "42.5000",
-    "amount": "1054.5000",
-    "final_amount": "1054.50",
+    "amount": "1051.8750",
+    "final_amount": "1051.88",
     "rounding_mode": "half_up_final_amount_only"
   },
   "meta": {}
@@ -451,7 +533,7 @@ Rules:
 
 ### POST `/api/v1/dairies/{dairy}/pricing/versions/{pricingVersion}/activate`
 
-Activates a draft or tested version. This endpoint is blocked unless the product-owner approval is recorded in the policy and contract state.
+Activates a draft version (or schedules it if the effective date is in the future). This endpoint is blocked unless product-owner approval is recorded in the policy and contract state.
 
 Request body:
 
@@ -464,40 +546,35 @@ Request body:
 
 Rules:
 
-- the version must be in a valid state for activation
+- activation is fail-closed behind backend configuration `pricing.activation_enabled`, sourced from `PRICING_ACTIVATION_ENABLED` and defaulting to `false`
+- while the gate is disabled, the endpoint returns `409 Conflict` with stable error code `pricing_activation_disabled` and performs no write
+- the version must be in a valid draft state for activation
 - no active or overlapping versions remain for the same milk type in the same effective-date window
-- activated pricing versions are immutable; future edits create a new version
-- activation is auditable and must record actor, dairy, time, reason, and payload hash
+- activated pricing versions are immutable; future changes create a new version
+- activation is auditable and records actor, dairy, time, reason, and payload hash
 - until the approval is recorded, the service rejects activation with a contract-blocking error
-
-### GET `/api/v1/dairies/{dairy}/pricing/versions/{pricingVersion}`
-
-Returns the full version details, including method, precision snapshot, effective date window, and immutable payload information.
 
 ### GET `/api/v1/dairies/{dairy}/pricing/versions/{pricingVersion}/history`
 
-Returns the timeline of changes, activation events, and audit records for the version.
+Returns the timeline of changes, test calculations, activation events, and audit records for the specific pricing version.
 
 ### GET `/api/v1/dairies/{dairy}/pricing/milk-types/{milkType}`
 
-Returns the current active pricing configuration and latest status for one milk type.
+Returns the current active pricing configuration and latest version status for one milk type.
 
-## Optional Google-assisted location with manual fallback
+## Assisted dairy location with manual fallback
 
-### POST `/api/v1/dairies/{dairy}/location/search`
+Location lookup uses dairy-scoped, authenticated Laravel proxy endpoints. Google credentials remain strictly server-side in backend environment configuration (`.env`), protected by IP/quota restrictions, and are never exposed or returned to clients. Saving the confirmed location reuses the existing dairy update endpoint `PATCH /api/v1/dairies/{dairy}`.
 
-Performs Google-assisted place lookup when the user chooses to use it. The API may also accept a current-location lookup request and return suggestions.
+### GET `/api/v1/dairies/{dairy}/location/suggestions`
 
-Request body:
+Performs Google-assisted place autocomplete search via the authenticated Laravel proxy when the user chooses to search. Read-only search does not mutate state and does not require `client_uuid`.
 
-```json
-{
-  "query": "Bawana",
-  "latitude": "28.7856",
-  "longitude": "77.0559",
-  "client_uuid": "13ac1d52-e3ea-4203-9dbf-f3c80564801a"
-}
-```
+Query parameters:
+
+- `query` required string (minimum 3 characters)
+- `latitude` optional decimal string (for location bias)
+- `longitude` optional decimal string (for location bias)
 
 Response example:
 
@@ -508,12 +585,10 @@ Response example:
   "data": {
     "items": [
       {
-        "place_id": "google-place-id",
+        "place_id": "ChIJL_h_P8QBDTkRw9Yq4Yg_Zf8",
         "display_name": "Bawana, Delhi",
-        "latitude": "28.7856",
-        "longitude": "77.0559",
-        "source": "google",
-        "formatted_address": "Bawana, Delhi, India"
+        "formatted_address": "Bawana, Delhi, 110039, India",
+        "source": "google"
       }
     ]
   },
@@ -523,49 +598,110 @@ Response example:
 
 Rules:
 
-- location lookup is optional and never required for core setup completion
-- if Google is unavailable, the client may use manual entry without a server-side failure
-- the service records `source` as `google` or `manual`
-- manual fallback must support village, district, state, PIN, city, latitude, longitude, and place metadata if available
+- read-only proxy; rate-limited and protected by server-side quotas
+- does not require `client_uuid`
+- Google credentials remain server-side only
 
-### PATCH `/api/v1/dairies/{dairy}/location`
+### POST `/api/v1/dairies/{dairy}/location/reverse-geocode`
 
-Stores the confirmed dairy location.
+Resolves latitude and longitude coordinates to structured address components via the authenticated Laravel proxy.
 
 Request body:
 
 ```json
 {
-  "city": "Delhi",
-  "district": "North West Delhi",
-  "state": "Delhi",
-  "country": "IN",
-  "pin_code": "110039",
-  "latitude": "28.7856",
-  "longitude": "77.0559",
-  "source": "manual",
-  "place_id": null,
-  "client_uuid": "85d82f1f-6409-4875-b8b1-b5217ed8d1df"
+  "latitude": "28.7856000",
+  "longitude": "77.0559000"
 }
 ```
 
 Validation rules:
 
-- at least one location identifier must be present: manual address or Google-provided place
-- latitude and longitude are decimal strings
-- if `source` is `google`, the place must be readable and known to the provider
-- manual fallback remains available when Google fails
+- `latitude` required decimal string between `-90.0000000` and `90.0000000`
+- `longitude` required decimal string between `-180.0000000` and `180.0000000`
+- read-only lookup; does not mutate dairy records and does not require `client_uuid`
+
+Response example:
+
+```json
+{
+  "success": true,
+  "message": "Coordinates resolved successfully.",
+  "data": {
+    "place_id": "ChIJL_h_P8QBDTkRw9Yq4Yg_Zf8",
+    "formatted_address": "Bawana, Delhi, 110039, India",
+    "village_or_area": "Bawana",
+    "city": "Delhi",
+    "district": "North West Delhi",
+    "state": "Delhi",
+    "postal_code": "110039",
+    "country": "IN",
+    "source": "google"
+  },
+  "meta": {}
+}
+```
+
+### PATCH `/api/v1/dairies/{dairy}` (Saving confirmed location and profile updates)
+
+Reuses the existing Phase 1 dairy update endpoint to save user-confirmed structured location fields, map coordinates, and source provenance, while preserving backward compatibility for legacy partial profile and location updates.
+
+#### Backward Compatibility for Legacy Updates
+Existing Phase 1 partial updates continue to work without modification. An authenticated owner may update `name` and/or partial location fields (`city`, `state`, `country`, `postal_code`) without providing `source` or coordinate fields.
+
+#### Conditional Enhanced Location Validation
+When `location.source` is submitted, it signifies confirmed enhanced location data and triggers strict validation:
+- `location.source`: optional for legacy partial updates; when present, must be an enum: `"google"` or `"manual"`
+- **Enhanced confirmation required fields**: When `location.source` is provided, the request must include:
+  - `location.state`: required string up to 100 characters
+  - `location.country`: required string, restricted to `"IN"`
+  - `location.postal_code`: required valid six-digit Indian PIN code
+- **Paired coordinate rule**: `location.latitude` and `location.longitude` must appear together (if either is submitted, both are required decimal strings: `-90.0000000` to `90.0000000` and `-180.0000000` to `180.0000000`).
+- **Provider place ID rules**:
+  - when `location.source` is `"google"`, `location.place_id` is **required** (non-empty Google Place ID string).
+  - when `location.source` is `"manual"`, `location.place_id` **must be null** (or explicitly omitted).
+- **Column Mapping and Reused Fields**:
+  - The API field `location.village_or_area` maps directly to the existing `dairies.village_area` database column (optional string up to 150 characters).
+  - The API field `location.district` maps directly to the existing `dairies.district` database column (optional string up to 150 characters).
+  - The API field `location.city` maps to the existing `dairies.city` database column.
+- **Optional structured fields**:
+  - `location.village_or_area`: optional string up to 150 characters
+  - `location.city`: optional string up to 150 characters
+  - `location.district`: optional string up to 150 characters
+- **Manual fallback**: If Google services fail, are unavailable, or the user opts out of assisted lookup, the mobile client submits manual entries with `location.source: "manual"` and `location.place_id: null`. Manual entry requires `state`, `country: "IN"`, and a valid 6-digit `postal_code`; `village_or_area`, `city`, and `district` are captured from structured text inputs; coordinates are optional.
+- **P2-09 Implementation Scope**: Task `P2-09` reuses existing `dairies.village_area` and `dairies.district` columns (it does not add new columns for them). P2-09 adds a new additive forward migration introducing only the missing coordinate and provenance columns: `latitude` (decimal, e.g. `decimal(10, 7)`, nullable), `longitude` (decimal, e.g. `decimal(10, 7)`, nullable), `location_source` (string/enum: `"manual"`, `"google"`, nullable), and `provider_place_id` (string, nullable). Do not rewrite the existing `create_dairies` migration; use a new forward migration. In addition, `P2-09` must update the `Dairy` model fillable attributes and casts as needed, `UpdateDairyRequest` conditional validation, `DairyProfileService` transaction and persistence mapping, `DairyDetailResource` API output, and comprehensive automated feature tests covering both legacy partial updates and enhanced location confirmation.
+
+Request body example (enhanced location confirmation):
+
+```json
+{
+  "name": "Green Valley Dairy",
+  "location": {
+    "village_or_area": "Bawana Industrial Area",
+    "city": "Delhi",
+    "district": "North West Delhi",
+    "state": "Delhi",
+    "country": "IN",
+    "postal_code": "110039",
+    "latitude": "28.7856000",
+    "longitude": "77.0559000",
+    "source": "google",
+    "place_id": "ChIJL_h_P8QBDTkRw9Yq4Yg_Zf8"
+  }
+}
+```
 
 ## Security and authorization contract
 
-- All endpoints are under `auth:sanctum`
-- Dairy mutation endpoints are owner-only
-- Staff/operator roles remain deferred; no endpoint exposes or infers them
-- A cross-dairy resource lookup resolves as `404`
-- A `403` is reserved for an authenticated actor whose membership exists but whose action is not allowed by the active policy
-- `409` covers idempotent-safe conflicts, rejected duplicate requests, and price-version overlap conflicts
-- `422` covers validation failures
-- `429` covers throttling
+- All endpoints require `auth:sanctum` bearer authentication.
+- Missing or invalid authentication returns `401 Unauthorized`.
+- Dairies outside the caller's active membership scope, inactive memberships, nested cross-dairy resources, or membership mismatches return `404 Not Found` (never disclosing resource existence).
+- An authenticated active member lacking required permission (including all active non-owner members accessing Phase 2 endpoints) returns `403 Forbidden`.
+- Current Phase 2 endpoints (both read and mutation) remain strictly owner-only. Staff and operator roles remain deferred.
+- Validation failures return `422 Unprocessable Entity`.
+- Idempotency collisions, duplicate records, or price-version window overlaps return `409 Conflict`.
+- Throttled proxy or calculation requests return `429 Too Many Requests`.
+- The recommended fixed-rate MVP is pending approval, so pricing activation endpoints remain locked and reject activation requests until approval is recorded.
 
 ## Implementation notes
 
@@ -575,3 +711,4 @@ Validation rules:
 - Do not silently overwrite active or historical pricing data
 - Keep activated pricing versions immutable and create a new version instead of mutating in place
 - Keep the pricing contract in a blocked state until product-owner approval is captured in the decision log
+- Implement `PRICING_ACTIVATION_ENABLED=false` as the default and test both fail-closed activation and the explicitly enabled path; documentation approval alone must never enable activation

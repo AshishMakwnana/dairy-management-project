@@ -75,7 +75,7 @@ Port 8080 must not be claimed or stopped; it belongs to the unrelated `client-de
 
 ## Immediate next technical work
 
-1. Working on P2-01: publish the detailed Phase 2 API contract and authorization matrix and record the product-governance decisions as pending product-owner approval. Pricing precision, rounding, effective-date behavior, and the MVP pricing method set remain under review; no pricing activation is authorized until the decision is recorded.
+1. Working on P2-01: Phase 2 scope, detailed API contract, and authorization matrix are reconciled around canonical item-based dairy configuration endpoints, server-derived setup readiness plus explicit idempotent owner completion, dairy-local farmer profiles, versioned pricing endpoints, and dairy-scoped location assistance. The corrected fixed-rate example calculates `24.750 × 42.5000 = 1051.8750`, rounded half-up to `1051.88`. Backdating is prohibited for the MVP, and activation is fail-closed behind `PRICING_ACTIVATION_ENABLED=false`. The recommended fixed-rate rules still require explicit product-owner signoff, keeping pricing activation blocked and P2-01 IN PROGRESS.
 2. P2-02 may proceed only for non-financial dairy configuration endpoints while pricing activation remains blocked. No Phase 2 pricing implementation begins before the approved rule set is documented.
 
 ## Known risks and unresolved decisions
@@ -83,7 +83,8 @@ Port 8080 must not be claimed or stopped; it belongs to the unrelated `client-de
 - Production vector artwork and platform icon exports for the approved blue D-shaped mark are not yet available.
 - A production SMS provider is not selected; SMS remains routed to Mailpit in local mixed-channel testing.
 - The Phase 1 database stores legacy baseline users with nullable mobile numbers; newly OTP-authenticated identities must have a normalized unique phone pair.
-- Detailed pricing formulas and rounding rules are not approved.
+- The recommended fixed-rate MVP pricing rules (ADR 013: fixed rate per enabled milk type, Cow and Buffalo configured independently, 3 decimal quantity, 4 decimal rate, 2 decimal final amount, half-up rounding only on final amount, effective from start of selected date in dairy timezone, MVP backdating prohibited, no overlapping effective versions, activated versions are immutable) remain pending product-owner approval; pricing activation is blocked.
+- Sanctum bearer tokens currently have no configured finite lifetime and only current-token logout exists. `P1-R08` must add an approved finite lifetime plus owner device/session listing and revocation before financial workflows.
 - Emulator validation is unavailable on this Windows ARM64 host; the authorized Motorola Edge 50 Fusion was used for physical-device validation over USB.
 - npm reports transitive advisories in the generated Expo/Metro/React Native tree. Forced automatic remediation is unsafe; track upstream-compatible releases.
 - The approved Phase 1 mobile boundary is consolidated in ADR 012 and `docs/phase-1-review-follow-up.md`; the master blueprint still contains historical sections that require later document cleanup.
